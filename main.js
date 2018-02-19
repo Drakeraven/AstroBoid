@@ -71,8 +71,8 @@ Circle.prototype.rule1 = function () {
     tempVect.x /= (this.game.entities.length - 1);
     tempVect.y /= (this.game.entities.length - 1);
 
-    tempVect.x = (tempVect.x - this.x) / (100 * cohesion);
-    tempVect.y = (tempVect.y - this.y) / (100 * cohesion);
+    tempVect.x = (tempVect.x - this.x) / cohesion;
+    tempVect.y = (tempVect.y - this.y) / cohesion;
 
     return tempVect;
     
@@ -112,19 +112,15 @@ Circle.prototype.rule3 = function () {
 Circle.prototype.rule4 = function () {
     tempVect = { x: 0, y: 0 };
 
-    if (boid.collideLeft) {
-        console.log("left");
+    if (this.collideLeft()) {
         tempVect.x = steer;
-    } else if (boid.collideRight) {
-        console.log("right");
+    } else if (this.collideRight()) {
         tempVect.x = -1 * steer;
     }
 
-    if (boid.collideTop) {
-        console.log("top");
+    if (this.collideTop()) {
         tempVect.y = steer;
-    } else if (boid.collideBottom) {
-        console.log("bottom");
+    } else if (this.collideBottom()) {
         tempVect.y = -1 * steer;
     }
 
@@ -139,28 +135,36 @@ Circle.prototype.update = function () {
     Maybe wrap the edges? to be decided
     */
 
-    if (this.collideLeft() || this.collideRight()) {
-        this.velocity.x = -this.velocity.x * friction;
-        if (this.collideLeft()) this.x = this.radius;
-        if (this.collideRight()) this.x = 800 - this.radius;
-        this.x += this.velocity.x * this.game.clockTick;
-        this.y += this.velocity.y * this.game.clockTick;
-    }
+    //if (this.collideLeft() || this.collideRight()) {
+    //    this.velocity.x = -this.velocity.x * friction;
+    //    if (this.collideLeft()) this.x = this.radius;
+    //    if (this.collideRight()) this.x = 800 - this.radius;
+    //    this.x += this.velocity.x * this.game.clockTick;
+    //    this.y += this.velocity.y * this.game.clockTick;
+    //}
 
-    if (this.collideTop() || this.collideBottom()) {
-        this.velocity.y = -this.velocity.y * friction;
-        if (this.collideTop()) this.y = this.radius;
-        if (this.collideBottom()) this.y = 800 - this.radius;
-        this.x += this.velocity.x * this.game.clockTick;
-        this.y += this.velocity.y * this.game.clockTick;
-    }
+    //if (this.collideTop() || this.collideBottom()) {
+    //    this.velocity.y = -this.velocity.y * friction;
+    //    if (this.collideTop()) this.y = this.radius;
+    //    if (this.collideBottom()) this.y = 800 - this.radius;
+    //    this.x += this.velocity.x * this.game.clockTick;
+    //    this.y += this.velocity.y * this.game.clockTick;
+    //}
 
     v1 = this.rule1();
     v2 = this.rule2();
     v3 = this.rule3();
+    v4 = this.rule4();
 
-    this.velocity.x += v1.x + v2.x + v3.x;
-    this.velocity.y += v1.y + v2.y + v3.y;
+    this.velocity.x += v1.x + v2.x + v3.x + v4.x;
+    this.velocity.y += v1.y + v2.y + v3.y + v4.y;
+
+    var speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+    if (speed > maxSpeed) {
+        var ratio = maxSpeed / speed;
+        this.velocity.x *= ratio;
+        this.velocity.y *= ratio;
+    }
 
     this.x += this.velocity.x * this.game.clockTick;
     this.y += this.velocity.y * this.game.clockTick;
@@ -184,10 +188,10 @@ Circle.prototype.draw = function (ctx) {
 var friction = 1;
 var acceleration = 1000000;
 var maxSpeed = 200;
-var cohesion = 1; // percentage a boid draws itself into the flock
+var cohesion = 25; // percentage a boid draws itself into the flock
 var separation = 50; // distance boids keep between eachother 
 var alignment = 8; // try to match average direction 
-var steer = 500; // amount of turn back when leaves the canvas 
+var steer = 10; // amount of turn back when leaves the canvas 
 
 var ASSET_MANAGER = new AssetManager();
 
