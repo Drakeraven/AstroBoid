@@ -8,7 +8,7 @@ function distance(a, b) {
 }
 
 function Circle(game) {
-    this.player = 1;
+    //this.player = 1;
     this.radius = 20;
     this.visualRadius = 500;
     this.colors = ["Red", "Green", "Blue", "White"];
@@ -59,16 +59,85 @@ Circle.prototype.collideBottom = function () {
     return (this.y + this.radius) > 800;
 };
 
+Circle.prototype.rule1 = function () {
+    tempVect = { x: 0, y: 0 };
+    for (var i = 0; i < this.game.entities.length; i++) {
+        ent = this.game.entities[i];
+        if (ent !== this) {
+            tempVect.x += ent.x;
+            tempVect.y += ent.y;
+        }
+    }
+    tempVect.x /= (this.game.entities.length - 1);
+    tempVect.y /= (this.game.entities.length - 1);
+
+    tempVect.x = (tempVect.x - this.x) / (100 * cohesion);
+    tempVect.y = (tempVect.y - this.y) / (100 * cohesion);
+
+    return tempVect;
+    
+}
+
+Circle.prototype.rule2 = function () {
+    tempVect = { x: 0, y: 0 };
+    for (var i = 0; i < this.game.entities.length; i++) {
+        ent = this.game.entities[i];
+        if (ent !== this) {
+            if (distance(ent, this) < separation) {
+                tempVect.x -= (ent.x - this.x);
+                tempVect.y -= (ent.y - this.y);
+            }
+        }
+    }
+    return tempVect;
+}
+
+Circle.prototype.rule3 = function () {
+    tempVect = { x: 0, y: 0 };
+    for (var i = 0; i < this.game.entities.length; i++) {
+        ent = this.game.entities[i];
+        if (ent !== this) {
+            tempVect.x += ent.velocity.x;
+            tempVect.y += ent.velocity.y;
+        }
+    }
+    tempVect.x /= (this.game.entities.length - 1);
+    tempVect.y /= (this.game.entities.length - 1);
+
+    tempVect.x = (tempVect.x  - this.velocity.x) / alignment;
+    tempVect.y = (tempVect.y - this.velocity.y) / alignment;
+    return tempVect;
+}
+
+Circle.prototype.rule4 = function () {
+    tempVect = { x: 0, y: 0 };
+
+    if (boid.collideLeft) {
+        console.log("left");
+        tempVect.x = steer;
+    } else if (boid.collideRight) {
+        console.log("right");
+        tempVect.x = -1 * steer;
+    }
+
+    if (boid.collideTop) {
+        console.log("top");
+        tempVect.y = steer;
+    } else if (boid.collideBottom) {
+        console.log("bottom");
+        tempVect.y = -1 * steer;
+    }
+
+    return tempVect;
+}
+
 Circle.prototype.update = function () {
     Entity.prototype.update.call(this);
-/*create boid behavior
-  generate a way for boids to avoid bullets/some entity type
+/*
+ generate a way for boids to avoid bullets/some entity type
     create a lil shooty boi who will let ya try to kill boids
+    Maybe wrap the edges? to be decided
     */
-
-
-    this.x += this.velocity.x * this.game.clockTick;
-    this.y += this.velocity.y * this.game.clockTick;
 
     if (this.collideLeft() || this.collideRight()) {
         this.velocity.x = -this.velocity.x * friction;
@@ -86,71 +155,18 @@ Circle.prototype.update = function () {
         this.y += this.velocity.y * this.game.clockTick;
     }
 
-    for (var i = 0; i < this.game.entities.length; i++) {
-        var ent = this.game.entities[i];
-        if (ent !== this && this.collide(ent)) {
-            var temp = { x: this.velocity.x, y: this.velocity.y };
+    v1 = this.rule1();
+    v2 = this.rule2();
+    v3 = this.rule3();
 
-            var dist = distance(this, ent);
-            var delta = this.radius + ent.radius - dist;
-            var difX = (this.x - ent.x)/dist;
-            var difY = (this.y - ent.y)/dist;
+    this.velocity.x += v1.x + v2.x + v3.x;
+    this.velocity.y += v1.y + v2.y + v3.y;
 
-            this.x += difX * delta / 2;
-            this.y += difY * delta / 2;
-            ent.x -= difX * delta / 2;
-            ent.y -= difY * delta / 2;
+    this.x += this.velocity.x * this.game.clockTick;
+    this.y += this.velocity.y * this.game.clockTick;
 
-            this.velocity.x = ent.velocity.x * friction;
-            this.velocity.y = ent.velocity.y * friction;
-            ent.velocity.x = temp.x * friction;
-            ent.velocity.y = temp.y * friction;
-            this.x += this.velocity.x * this.game.clockTick;
-            this.y += this.velocity.y * this.game.clockTick;
-            ent.x += ent.velocity.x * this.game.clockTick;
-            ent.y += ent.velocity.y * this.game.clockTick;
-            if (this.it) {
-                this.setNotIt();
-                ent.setIt();
-            }
-            else if (ent.it) {
-                this.setIt();
-                ent.setNotIt();
-            }
-        }
-
-        if (ent != this && this.collide({ x: ent.x, y: ent.y, radius: this.visualRadius })) {
-            var dist = distance(this, ent);
-            if (this.it && dist > this.radius + ent.radius + 10) {
-                var difX = (ent.x - this.x)/dist;
-                var difY = (ent.y - this.y)/dist;
-                this.velocity.x += difX * acceleration / (dist*dist);
-                this.velocity.y += difY * acceleration / (dist * dist);
-                var speed = Math.sqrt(this.velocity.x*this.velocity.x + this.velocity.y*this.velocity.y);
-                if (speed > maxSpeed) {
-                    var ratio = maxSpeed / speed;
-                    this.velocity.x *= ratio;
-                    this.velocity.y *= ratio;
-                }
-            }
-            if (ent.it && dist > this.radius + ent.radius) {
-                var difX = (ent.x - this.x) / dist;
-                var difY = (ent.y - this.y) / dist;
-                this.velocity.x -= difX * acceleration / (dist * dist);
-                this.velocity.y -= difY * acceleration / (dist * dist);
-                var speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-                if (speed > maxSpeed) {
-                    var ratio = maxSpeed / speed;
-                    this.velocity.x *= ratio;
-                    this.velocity.y *= ratio;
-                }
-            }
-        }
-    }
-
-
-    this.velocity.x -= (1 - friction) * this.game.clockTick * this.velocity.x;
-    this.velocity.y -= (1 - friction) * this.game.clockTick * this.velocity.y;
+    //this.velocity.x -= (1 - friction) * this.game.clockTick * this.velocity.x;
+    //this.velocity.y -= (1 - friction) * this.game.clockTick * this.velocity.y;
 };
 
 Circle.prototype.draw = function (ctx) {
@@ -168,6 +184,10 @@ Circle.prototype.draw = function (ctx) {
 var friction = 1;
 var acceleration = 1000000;
 var maxSpeed = 200;
+var cohesion = 1; // percentage a boid draws itself into the flock
+var separation = 50; // distance boids keep between eachother 
+var alignment = 8; // try to match average direction 
+var steer = 500; // amount of turn back when leaves the canvas 
 
 var ASSET_MANAGER = new AssetManager();
 
@@ -186,7 +206,7 @@ ASSET_MANAGER.downloadAll(function () {
     circle.setIt();
     gameEngine.addEntity(circle);
 
-    for (var i = 0; i < 12; i++) {
+    for (var i = 0; i < 10; i++) {
         circle = new Circle(gameEngine);
         gameEngine.addEntity(circle);
     }
