@@ -77,8 +77,9 @@ GameEngine.prototype.startInput = function () {
     }, false);
 
     this.ctx.canvas.addEventListener("click", function (e) {
-        //console.log(getXandY(e));
+        console.log(getXandY(e));
         that.click = getXandY(e);
+        that.gun.fire(that.click.x, that.click.y);
     }, false);
 
     this.ctx.canvas.addEventListener("wheel", function (e) {
@@ -101,10 +102,10 @@ GameEngine.prototype.addBoid = function (boid) {
     console.log("added boid");
     this.boids.push(boid);
 }
-function flip() {
-    m1 = -m1;
-    console.log("flipped");
-    setTimeout(flip, 5000);
+
+GameEngine.prototype.addBullet = function (bullet) {
+    console.log("added bullet");
+    this.bullets.push(bullet);
 }
 
 GameEngine.prototype.draw = function () {
@@ -113,6 +114,12 @@ GameEngine.prototype.draw = function () {
     for (var i = 0; i < this.boids.length; i++) {
         this.boids[i].draw(this.ctx);
     }
+
+    for (var i = 0; i < this.bullets.length; i++) {
+        this.bullets[i].draw(this.ctx);
+    }
+
+    this.gun.draw(this.ctx);
     this.ctx.restore();
 }
 
@@ -127,9 +134,23 @@ GameEngine.prototype.update = function () {
         }
     }
 
+    for (var i = 0; i < this.bullets.length; i++) {
+        var ent = this.bullets[i];
+
+        if (!ent.removeFromWorld) {
+            ent.update();
+        }
+    }
+
     for (var i = this.boids.length - 1; i >= 0; --i) {
         if (this.boids[i].removeFromWorld) {
             this.boids.splice(i, 1);
+        }
+    }
+
+    for (var i = this.bullets.length - 1; i >= 0; --i) {
+        if (this.bullets[i].removeFromWorld) {
+            this.bullets.splice(i, 1);
         }
     }
 }
