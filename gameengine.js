@@ -52,11 +52,14 @@ GameEngine.prototype.init = function (ctx) {
 
 GameEngine.prototype.start = function () {
     console.log("starting game");
-   // flip();
     var that = this;
     (function gameLoop() {
-        that.loop();
-        requestAnimFrame(gameLoop, that.ctx.canvas);
+        if (that.boids.length == 0) {
+            alert("Wow, were you a little bored?");
+        } else {
+            that.loop();
+            requestAnimFrame(gameLoop, that.ctx.canvas);
+        }
     })();
 }
 
@@ -77,7 +80,7 @@ GameEngine.prototype.startInput = function () {
             saveGameState(that);
         } else if (e.keyCode == 76) {
             console.log("load game!");
-            loadGameState(boidState, bulletState, that);
+            socket.emit("load", { studentname: "Stephanie Day", statename: "astroState" });
         }
     }, false);
 
@@ -174,21 +177,4 @@ Entity.prototype.draw = function (ctx) {
         this.game.ctx.stroke();
         this.game.ctx.closePath();
     }
-}
-
-Entity.prototype.rotateAndCache = function (image, angle) {
-    var offscreenCanvas = document.createElement('canvas');
-    var size = Math.max(image.width, image.height);
-    offscreenCanvas.width = size;
-    offscreenCanvas.height = size;
-    var offscreenCtx = offscreenCanvas.getContext('2d');
-    offscreenCtx.save();
-    offscreenCtx.translate(size / 2, size / 2);
-    offscreenCtx.rotate(angle);
-    offscreenCtx.translate(0, 0);
-    offscreenCtx.drawImage(image, -(image.width / 2), -(image.height / 2));
-    offscreenCtx.restore();
-    //offscreenCtx.strokeStyle = "red";
-    //offscreenCtx.strokeRect(0,0,size,size);
-    return offscreenCanvas;
 }

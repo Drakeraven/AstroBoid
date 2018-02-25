@@ -1,21 +1,47 @@
 
 //TODO: Connect it to the server and save/load.
+var socket = io.connect("http://24.16.255.56:8888");
+
+window.onload = function () {
+    socket.on("ping", function (ping) {
+        console.log("returned ping: " + ping);
+        socket.emit("pong");
+    });
+
+    socket.on("connect", function () {
+        console.log("socket connected.");
+    });
+
+    socket.on("disconnect", function () {
+        console.log("socket disconnected.");
+    });
+
+    socket.on("reconnect", function () {
+        console.log("socket reconnected.");
+    });
+
+    socket.on("load", function (data) {
+        boidState = data['boids'];
+        bulletState = data['bullets'];
+        loadGameState(boidState, bulletState, gameEngine);
+    });
+
+}
 
 var boidState = null;
 var bulletState = null;
 
 function saveGameState(game) {
-    boidState = JSON.stringify(game.boids, ['velocity', 'x', 'y', 'it']);
-    bulletState = JSON.stringify(game.bullets, ['x', 'y', 'velocity']);
+    temp1 = JSON.stringify(game.boids, ['velocity', 'x', 'y', 'it']);
+    temp2 = JSON.stringify(game.bullets, ['x', 'y', 'velocity']);
+
+    socket.emit("save", { studentname: "Stephanie Day", statename: "astroState", boids: temp1, bullets: temp2 });
 }
 
 function loadGameState(boids, bullets, game) {
     let boidReset = [];
     let bulletReset = [];
-
-    console.log(JSON.parse(boidState));
-    console.log(JSON.parse(bulletState));
-
+    
     if (boidState != null && bulletState != null) {
         boids = JSON.parse(boidState);
         bullets = JSON.parse(bulletState);
@@ -40,14 +66,12 @@ function loadGameState(boids, bullets, game) {
         }
 
     }
-
-    console.log(boidReset);
-    console.log(bulletReset);
     game.boids = boidReset;
     game.bullets = bulletReset;
 }
 
 var ASSET_MANAGER = new AssetManager();
+var gameEngine = new GameEngine();
 
 ASSET_MANAGER.queueDownload("./img/gun.png");
 
@@ -56,7 +80,6 @@ ASSET_MANAGER.downloadAll(function () {
     var canvas = document.getElementById('gameWorld');
     var ctx = canvas.getContext('2d');
 
-    var gameEngine = new GameEngine();
     var gun = new Gun(gameEngine, ASSET_MANAGER.getAsset("./img/gun.png"), 340, 750);
     gameEngine.gun = gun;
     var circle = new Circle(gameEngine);
