@@ -71,28 +71,20 @@ GameEngine.prototype.startInput = function () {
         return { x: x, y: y };
     }
 
-    this.ctx.canvas.addEventListener("mousemove", function (e) {
-        //console.log(getXandY(e));
-        that.mouse = getXandY(e);
+    this.ctx.canvas.addEventListener("keydown", function (e) {
+        if (e.keyCode == 83) {
+            console.log("save game!");
+            saveGameState(that);
+        } else if (e.keyCode == 76) {
+            console.log("load game!");
+            loadGameState(boidState, bulletState, that);
+        }
     }, false);
 
     this.ctx.canvas.addEventListener("click", function (e) {
         console.log(getXandY(e));
         that.click = getXandY(e);
         that.gun.fire(that.click.x, that.click.y);
-    }, false);
-
-    this.ctx.canvas.addEventListener("wheel", function (e) {
-        //console.log(getXandY(e));
-        that.wheel = e;
-        //       console.log(e.wheelDelta);
-        e.preventDefault();
-    }, false);
-
-    this.ctx.canvas.addEventListener("contextmenu", function (e) {
-        //console.log(getXandY(e));
-        that.rightclick = getXandY(e);
-        e.preventDefault();
     }, false);
 
     console.log('Input started');
