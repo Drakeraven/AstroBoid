@@ -54,6 +54,7 @@ function loadGameState(boids, bullets, game) {
             temp.it = boids[i].it;
             if (boids[i].it) {
                 temp.setIt();
+                badBoi = temp;
             }
             boidReset.push(temp);
         }
@@ -72,6 +73,7 @@ function loadGameState(boids, bullets, game) {
 
 var ASSET_MANAGER = new AssetManager();
 var gameEngine = new GameEngine();
+var badBoi;
 
 ASSET_MANAGER.queueDownload("./img/gun.png");
 
