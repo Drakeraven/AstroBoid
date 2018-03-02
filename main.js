@@ -73,7 +73,6 @@ function loadGameState(boids, bullets, game) {
 
 var ASSET_MANAGER = new AssetManager();
 var gameEngine = new GameEngine();
-var badBoi;
 
 ASSET_MANAGER.queueDownload("./img/gun.png");
 
